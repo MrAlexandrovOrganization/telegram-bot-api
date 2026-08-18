@@ -1,0 +1,34 @@
+# Single shared Telegram Bot API server for all bots. Exposes the HTTP Bot
+# API on telegram-net:8081 while speaking MTProto to Telegram's data centers,
+# which is required because api.telegram.org (HTTP API) is unreachable on this
+# network. Bots join telegram-net (external) and point TELEGRAM_LOCAL_API_URL
+# at http://telegram-bot-api:8081.
+networks:
+  telegram-net:
+    name: telegram-net
+    driver_opts:
+      com.docker.network.driver.mtu: "1376"
+
+services:
+  telegram-bot-api:
+    container_name: telegram-bot-api
+    hostname: telegram-bot-api
+    image: aiogram/telegram-bot-api:9.6
+    restart: unless-stopped
+    environment:
+      - TELEGRAM_API_ID=${TELEGRAM_API_ID}
+      - TELEGRAM_API_HASH=${TELEGRAM_API_HASH}
+      - TELEGRAM_LOCAL=1
+    volumes:
+      - telegram-bot-api-data:/var/lib/telegram-bot-api
+    networks:
+      - telegram-net
+    extends:
+      file: docker-compose.base.yml
+      service: base
+
+volumes:
+  telegram-bot-api-data:
+    # Explicit name so other projects can mount it read-only (external: true)
+    # to read downloaded files directly without public URLs.
+    name: telegram-bot-api-data
