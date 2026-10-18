@@ -1,4 +1,4 @@
-# infra__network__telegram-bot-api
+# telegram-bot-api
 
 ## Структура Compose
 
