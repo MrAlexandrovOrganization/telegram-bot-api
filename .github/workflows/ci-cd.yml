@@ -10,7 +10,7 @@ jobs:
   deploy:
     name: Deploy to VM
     runs-on: ubuntu-24.04
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && vars.SERVER_DEPLOY_ENABLED == 'true'
 
     steps:
       - name: Deploy via SSH

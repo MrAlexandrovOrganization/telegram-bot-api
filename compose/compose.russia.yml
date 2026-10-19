@@ -1,0 +1,28 @@
+# Only the API process joins the private Telegram DC SOCKS network.
+services:
+  telegram-bot-api:
+    image: ${TELEGRAM_BOT_API_PROXY_IMAGE:-local/telegram-bot-api-proxy}
+    build:
+      context: .
+      args:
+        TELEGRAM_BOT_API_IMAGE: ${TELEGRAM_BOT_API_IMAGE:?Run via make}
+        PROXYCHAINS_VERSION: ${PROXYCHAINS_VERSION:?Run via make}
+    networks:
+      - telegram-proxy
+    secrets:
+      - telegram-socks-password
+    healthcheck:
+      test: [CMD-SHELL, "wget -S -O /dev/null http://127.0.0.1:8081/ 2>&1 | grep -q 'HTTP/1.1 404'"]
+      interval: 15s
+      timeout: 5s
+      retries: 4
+      start_period: 30s
+networks:
+  telegram-net:
+    internal: true
+  telegram-proxy:
+    external: true
+    name: vless-relay_vpn-ingress
+secrets:
+  telegram-socks-password:
+    file: ./secrets/socks-password
