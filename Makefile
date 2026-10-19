@@ -29,7 +29,7 @@ check: compose-layout-check
 export IMAGE_COMPOSE_FILE := compose/docker-compose.yml:compose/compose.russia.yml
 .PHONY: versions image-build image-publish image-deploy image-activate image-check image-compose
 versions:
-	@printf '%s\n' 'TELEGRAM_BOT_API_IMAGE=$(TELEGRAM_BOT_API_IMAGE)' 'PROXYCHAINS_VERSION=$(PROXYCHAINS_VERSION)'
+	@printf '%s\n' 'TELEGRAM_BOT_API_IMAGE=$(TELEGRAM_BOT_API_IMAGE)' 'REDSOCKS_VERSION=$(REDSOCKS_VERSION)' 'IPTABLES_VERSION=$(IPTABLES_VERSION)'
 image-build:
 	python3 scripts/images.py build
 image-publish:

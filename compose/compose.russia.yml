@@ -6,7 +6,10 @@ services:
       context: .
       args:
         TELEGRAM_BOT_API_IMAGE: ${TELEGRAM_BOT_API_IMAGE:?Run via make}
-        PROXYCHAINS_VERSION: ${PROXYCHAINS_VERSION:?Run via make}
+        REDSOCKS_VERSION: ${REDSOCKS_VERSION:?Run via make}
+        IPTABLES_VERSION: ${IPTABLES_VERSION:?Run via make}
+    cap_add: [NET_ADMIN]
+    stop_grace_period: 45s
     networks:
       - telegram-proxy
     secrets:

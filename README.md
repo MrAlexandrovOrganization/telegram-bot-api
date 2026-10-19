@@ -16,8 +16,12 @@
 ## Hostkey Russia: Telegram DC traffic through Finland
 
 The shared API on Russia uses the same pinned Bot API 9.6 image as server,
-with proxychains-ng preloaded into its dynamically linked C++ process. Only
-that process receives the SOCKS configuration; no host routes/firewall change.
+with a redsocks TCP redirector in the same container. Container-local iptables
+redirects only Telegram TCP/443 to SOCKS. NET_ADMIN belongs to this network
+namespace; host routes/firewall do not change. A local default route enables
+OUTPUT/NAT processing, while explicit OUTPUT filtering and internal Docker
+networks prevent direct egress. The wrapper supervises both processes and
+forwards termination to them.
 `--proxy` in upstream Bot API controls outgoing webhooks, not MTProto.
 
 The Russia overlay joins `telegram-net` (internal) and the existing internal
