@@ -63,3 +63,15 @@ copies of that session/token. This follows the
 Keep a private off-VM copy before activation. Do not print session paths, which
 may contain the bot token. Rollback after new updates needs the latest closed
 session and latest application database transferred back first.
+
+
+`make image-smoke` runs the exact built image with synthetic API credentials
+on an isolated internal Docker network. It checks the HTTP listener, BusyBox
+route detection, NAT/filter rules, survival of unrelated adopted children,
+and shutdown when the SOCKS redirector stops. It uses no production sessions
+or external Telegram connection and runs before image publication in CI.
+
+The first migrated client is gym-bot. Its closed session archive and final
+PostgreSQL dump are retained privately on both VMs and off-VM under the
+operator's gym-bot-migration-20261019 backup directory. The old API continues
+serving other bots on server; do not start the old gym-bot session there.
