@@ -34,6 +34,7 @@ unset password
 iptables -N TELEGRAM_API_OUT 2>/dev/null || true
 iptables -F TELEGRAM_API_OUT
 iptables -A TELEGRAM_API_OUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+iptables -A TELEGRAM_API_OUT -d 127.0.0.1 -p tcp --dport 12345 -j ACCEPT
 iptables -A TELEGRAM_API_OUT -o lo -j ACCEPT
 iptables -A TELEGRAM_API_OUT -d "$proxy_ip" -p tcp --dport 10091 -j ACCEPT
 iptables -A TELEGRAM_API_OUT -j REJECT
