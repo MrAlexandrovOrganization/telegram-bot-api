@@ -62,7 +62,16 @@ cleanup() {
 }
 trap 'cleanup; exit 0' TERM INT
 set +e
-wait -n
+# Wait only for the two supervised processes. Exec/health probes may leave
+# short-lived adopted children; they must not terminate the API container.
+while kill -0 "$api_pid" 2>/dev/null && kill -0 "$proxy_pid" 2>/dev/null; do
+ sleep 1
+done
+if kill -0 "$api_pid" 2>/dev/null; then
+ wait "$proxy_pid"
+else
+ wait "$api_pid"
+fi
 status=$?
 cleanup
 exit "$status"

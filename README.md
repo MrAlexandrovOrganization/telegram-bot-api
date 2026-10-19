@@ -39,7 +39,7 @@ Private `.env` on Russia selects
 `COMPOSE_FILE=compose/docker-compose.yml:compose/compose.russia.yml` and holds
 TELEGRAM_API_ID / TELEGRAM_API_HASH. Preserve the named volume
 `telegram-bot-api-data`; other bots on Russia can join `telegram-net` and mount
-that volume read-only when required for media. Only loopback 8081 is published.
+that volume read-only when required for media. No API port is published on Russia; use the internal Docker network or image-compose exec for diagnostics.
 The HTTP probe checks API liveness; verify a real bot's getMe/getUpdates
 separately to confirm Telegram connectivity.
 

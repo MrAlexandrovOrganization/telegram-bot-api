@@ -48,3 +48,7 @@ include makefiles/ci-deploy.mk
 check:
 	sh -n scripts/proxy-entrypoint.sh
 	$(DOCKER_COMPOSE_BASE) --env-file /dev/null -f compose/docker-compose.yml -f compose/compose.russia.yml config --no-interpolate --no-env-resolution --quiet
+
+.PHONY: image-smoke
+image-smoke:
+	python3 scripts/smoke_image.py
