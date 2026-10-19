@@ -46,7 +46,7 @@ done
 iptables -t nat -C OUTPUT -j TELEGRAM_API_NAT 2>/dev/null || iptables -t nat -I OUTPUT 1 -j TELEGRAM_API_NAT
 # A route permits kernel OUTPUT/NAT processing. Both Docker networks remain
 # internal; filtering above and SOCKS are the only allowed outbound path.
-ip route show default | grep -q . || ip route add default dev eth0
+ip route show | grep -q '^default ' || ip route add default dev eth0
 redsocks -t -c "$config"
 redsocks -c "$config" &
 proxy_pid=$!
