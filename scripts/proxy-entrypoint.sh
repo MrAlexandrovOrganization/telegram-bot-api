@@ -30,13 +30,22 @@ redsocks {
 EOF
 unset password
 # Only Telegram TCP/443 is redirected. The upstream independently enforces
-# the same destination allowlist. No direct egress for any other traffic.
+# the same destination allowlist. Internal webhook delivery is explicitly
+# opted in below; all other new outbound connections remain blocked.
 iptables -N TELEGRAM_API_OUT 2>/dev/null || true
 iptables -F TELEGRAM_API_OUT
 iptables -A TELEGRAM_API_OUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 iptables -A TELEGRAM_API_OUT -d 127.0.0.1 -p tcp --dport 12345 -j ACCEPT
 iptables -A TELEGRAM_API_OUT -o lo -j ACCEPT
 iptables -A TELEGRAM_API_OUT -d "$proxy_ip" -p tcp --dport 10091 -j ACCEPT
+# Docker may assign a different bot IP after recreation. Permit only the
+# configured private bot subnet and the webhook listener port, not all egress.
+if [ -n "${TELEGRAM_WEBHOOK_CIDR:-}" ]; then
+ case "$TELEGRAM_WEBHOOK_CIDR" in
+  *[!0-9./]*|*/*/*) echo "Invalid webhook IPv4 CIDR" >&2; exit 1 ;;
+ esac
+ iptables -A TELEGRAM_API_OUT -d "$TELEGRAM_WEBHOOK_CIDR" -p tcp --dport 8080 -j ACCEPT
+fi
 iptables -A TELEGRAM_API_OUT -j REJECT
 iptables -C OUTPUT -j TELEGRAM_API_OUT 2>/dev/null || iptables -I OUTPUT 1 -j TELEGRAM_API_OUT
 iptables -t nat -N TELEGRAM_API_NAT 2>/dev/null || true

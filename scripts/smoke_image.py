@@ -13,15 +13,20 @@ def run(*args, check=True):
 
 image = next(iter(json.loads((ROOT / ".images/build.json").read_text())["images"].values()))
 name = "telegram-api-smoke-" + uuid.uuid4().hex[:12]
+webhook = name + "-webhook"
 try:
     run("docker", "network", "create", "--internal", name)
+    subnet = json.loads(run("docker", "network", "inspect", name))[0]["IPAM"]["Config"][0]["Subnet"]
+    run("docker", "run", "-d", "--name", webhook, "--network", name,
+        "--entrypoint", "sh", image, "-c",
+        'while true; do printf "HTTP/1.1 200 OK\\r\\nContent-Length: 2\\r\\nConnection: close\\r\\n\\r\\nok" | nc -l -p 8080; done')
     with tempfile.TemporaryDirectory() as directory:
         secret = Path(directory) / "password"
         secret.write_text("00" * 32)
         run("docker", "run", "-d", "--name", name, "--platform", "linux/amd64",
             "--network", name, "--add-host", "entry:127.0.0.1", "--cap-add", "NET_ADMIN",
             "-e", "TELEGRAM_API_ID=1234", "-e", "TELEGRAM_API_HASH=" + "00" * 16,
-            "-e", "TELEGRAM_LOCAL=1", "--mount",
+            "-e", "TELEGRAM_LOCAL=1", "-e", "TELEGRAM_WEBHOOK_CIDR=" + subnet, "--mount",
             "type=bind,src=" + str(secret) + ",dst=/run/secrets/telegram-socks-password,readonly", image)
         for attempt in range(30):
             result = subprocess.run(["docker", "exec", name, "wget", "-S", "-O", "/dev/null",
@@ -36,6 +41,22 @@ try:
             "-d", "149.154.160.0/20", "-p", "tcp", "--dport", "443", "-j", "REDIRECT", "--to-ports", "12345")
         run("docker", "exec", name, "iptables", "-C", "TELEGRAM_API_OUT", "-d", "127.0.0.1",
             "-p", "tcp", "--dport", "12345", "-j", "ACCEPT")
+        # Test the actual outbound webhook path, and persistence across restart.
+        for restarted in (False, True):
+            if restarted:
+                run("docker", "restart", name)
+            for attempt in range(30):
+                result = subprocess.run(["docker", "exec", name, "wget", "-qO-",
+                    "http://" + webhook + ":8080/"], capture_output=True, text=True)
+                if result.returncode == 0 and result.stdout == "ok":
+                    break
+                time.sleep(1)
+            else:
+                raise RuntimeError("Internal webhook delivery failed")
+            run("docker", "exec", name, "iptables", "-C", "TELEGRAM_API_OUT",
+                "-d", subnet, "-p", "tcp", "--dport", "8080", "-j", "ACCEPT")
+            rules = run("docker", "exec", name, "iptables", "-S", "TELEGRAM_API_OUT")
+            assert rules.splitlines()[-1].startswith("-A TELEGRAM_API_OUT -j REJECT")
         # An unrelated child must not end supervision of the API/proxy.
         run("docker", "exec", name, "sh", "-c", "sleep 1 &")
         time.sleep(2)
@@ -49,5 +70,6 @@ try:
             raise RuntimeError("API stayed active after its proxy stopped")
     print("Built API smoke test passed: listener, route, redirect, filtering and supervision")
 finally:
+    run("docker", "rm", "-f", webhook, check=False)
     run("docker", "rm", "-f", name, check=False)
     run("docker", "network", "rm", name, check=False)

@@ -75,3 +75,17 @@ The first migrated client is gym-bot. Its closed session archive and final
 PostgreSQL dump are retained privately on both VMs and off-VM under the
 operator's gym-bot-migration-20261019 backup directory. The old API continues
 serving other bots on server; do not start the old gym-bot session there.
+
+## Internal webhook delivery on Russia
+
+For notes-bot webhooks, set `TELEGRAM_WEBHOOK_CIDR` in the private `.env` to
+`docker network inspect telegram-net --format '{{(index .IPAM.Config 0).Subnet}}'`.
+The Russia overlay passes it into the API image. At every startup the wrapper
+allows TCP/8080 to that subnet before the final OUTPUT rejection. This keeps
+working when Docker reassigns the bot's address; update the setting if the
+network subnet changes. Empty disables this exception. Only trusted bot
+containers should join this internal network. Other ports and direct internet
+egress remain blocked. No host firewall rules or published ports are added.
+
+The image smoke test verifies HTTP delivery to another container on the private
+network, including after API restart. API liveness alone does not verify webhooks.
