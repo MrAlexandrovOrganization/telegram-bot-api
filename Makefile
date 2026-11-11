@@ -52,3 +52,5 @@ check:
 .PHONY: image-smoke
 image-smoke:
 	python3 scripts/smoke_image.py
+
+include makefiles/observability.mk

@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "service": "telegram-bot-api",
+  "components": [
+    "telegram-bot-api/*"
+  ],
+  "logs": [],
+  "assets": []
+}

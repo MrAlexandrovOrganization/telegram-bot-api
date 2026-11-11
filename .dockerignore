@@ -2,3 +2,5 @@
 .env
 secrets
 .images
+
+.observability/
