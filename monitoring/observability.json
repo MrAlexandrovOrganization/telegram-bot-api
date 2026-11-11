@@ -4,6 +4,12 @@
   "components": [
     "telegram-bot-api/*"
   ],
-  "logs": [],
+  "logs": [
+    {
+      "file": "monitoring/alloy/logs.alloy",
+      "phase": "parse",
+      "order": 30
+    }
+  ],
   "assets": []
 }

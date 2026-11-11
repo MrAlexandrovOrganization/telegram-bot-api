@@ -1,0 +1,16 @@
+stage.match {
+	selector = `{service="telegram-bot-api/telegram-bot-api"}`
+	// Redsocks supplies an explicit syslog level before its source location.
+	stage.regex {
+		expression = `^[0-9]+\.[0-9]+ (?P<text_level>debug|info|notice|warning|warn|err|error|crit|alert|emerg) [A-Za-z0-9_./-]+:[0-9]+ .*$`
+	}
+	// A failed proxy connection needs attention even when upstream calls it notice.
+	stage.regex {
+		expression = `^[0-9]+\.[0-9]+ notice .*(?P<proxy_connection_failed>Host is unreachable|Network is unreachable|Connection refused|Connection timed out).*$`
+	}
+
+	stage.template {
+		source   = "text_level"
+		template = `{{ if .proxy_connection_failed }}warn{{ else }}{{ .Value }}{{ end }}`
+	}
+}
